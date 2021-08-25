@@ -54,11 +54,17 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( opti
 def multiqc_options   = modules['multiqc']
 multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
 
+def trimgalore_options    = modules['trimgalore']
+trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
+if (params.save_trimmed)  { trimgalore_options.publish_files.put('fq.gz','') }
+
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC  } from '../modules/nf-core/modules/fastqc/main'  addParams( options: modules['fastqc'] )
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
+
+include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
+// include { FASTQC     } from '../modules/nf-core/modules/fastqc/main'        addParams( options: modules['fastqc']  )
+include { MULTIQC    } from '../modules/nf-core/modules/multiqc/main'       addParams( options: multiqc_options    )
 
 /*
 ========================================================================================
@@ -81,12 +87,17 @@ workflow LLRNASEQ {
     )
 
     //
-    // MODULE: Run FastQC
+    // MODULE: Run FastQC and trimgalore
     //
-    FASTQC (
-        INPUT_CHECK.out.reads
+
+    FASTQC_TRIMGALORE (
+        INPUT_CHECK.out,
+        params.skip_fastqc || params.skip_qc,
+        // params.with_umi,
+        params.skip_trimming
     )
-    ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
 
     //
     // MODULE: Pipeline reporting
@@ -114,8 +125,9 @@ workflow LLRNASEQ {
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_log.collect{it[1]}.ifEmpty([]))
     MULTIQC (
         ch_multiqc_files.collect()
     )
