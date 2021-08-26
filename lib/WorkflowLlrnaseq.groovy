@@ -14,6 +14,18 @@ class WorkflowLlrnaseq {
             log.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."
             System.exit(1)
         }
+        if (!params.gtf) {
+            log.error "No GTF annotation specified! The pipeline requires one of these files."
+            System.exit(1)
+        }
+        if (!params.skip_alignment) {
+            if (!valid_params['aligners'].contains(params.aligner)) {
+                log.error "Invalid option: '${params.aligner}'. Valid options for '--aligner': ${valid_params['aligners'].join(', ')}."
+                System.exit(1)
+            }
+        } else {
+            skipAlignmentWarn(log)
+        }
     }
 
     //
@@ -55,5 +67,14 @@ class WorkflowLlrnaseq {
                 "==================================================================================="
             System.exit(1)
         }
+    }
+    //
+    // Print a warning if --skip_alignment has been provided
+    //
+    private static void skipAlignmentWarn(log) {
+        log.warn "=============================================================================\n" +
+            "  '--skip_alignment' parameter has been provided.\n" +
+            "  Skipping alignment, genome-based quantification and all downstream QC processes.\n" +
+            "==================================================================================="
     }
 }
