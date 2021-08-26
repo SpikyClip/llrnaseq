@@ -7,17 +7,19 @@ class WorkflowLlrnaseq {
     //
     // Check and validate parameters
     //
-    public static void initialise(params, log) {
+    public static void initialise(params, log, valid_params) {
         genomeExistsError(params, log)
 
         if (!params.fasta) {
             log.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."
             System.exit(1)
         }
+
         if (!params.gtf) {
             log.error "No GTF annotation specified! The pipeline requires one of these files."
             System.exit(1)
         }
+
         if (!params.skip_alignment) {
             if (!valid_params['aligners'].contains(params.aligner)) {
                 log.error "Invalid option: '${params.aligner}'. Valid options for '--aligner': ${valid_params['aligners'].join(', ')}."
