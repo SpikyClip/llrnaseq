@@ -57,12 +57,12 @@
                 },
                 "save_trimmed": {
                     "type": "boolean",
-                    "description": "Skip the adapter trimming step.",
+                    "description": "Save the trimmed FastQ files in the results directory.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_trimming": {
                     "type": "boolean",
-                    "description": "Save the trimmed FastQ files in the results directory.",
+                    "description": "Skip the adapter trimming step.",
                     "fa_icon": "fas fa-save"
                 }
             }
