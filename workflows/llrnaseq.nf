@@ -4,6 +4,10 @@
 ========================================================================================
 */
 
+def valid_params = [
+    aligners       : ['hisat2'],
+]
+
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Validate input parameters
@@ -11,11 +15,26 @@ WorkflowLlrnaseq.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [
+    params.input, params.multiqc_config, 
+    params.fasta, params.gtf,
+    params.hisat2_index,
+    ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+
+// Check alignment parameters
+def prepareToolIndices  = []
+if (!params.skip_alignment) { prepareToolIndices << params.aligner }
+
+// Save AWS IGenomes file containing annotation version
+def anno_readme = params.genomes[ params.genome ]?.readme
+if (anno_readme && file(anno_readme).exists()) {
+    file("${params.outdir}/genome/").mkdirs()
+    file(anno_readme).copyTo("${params.outdir}/genome/")
+}
 
 /*
 ========================================================================================
@@ -35,6 +54,12 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 // Don't overwrite global params.modules, create a copy instead and use that within the main script.
 def modules = params.modules.clone()
 
+def publish_genome_options = params.save_reference ? [publish_dir: 'genome']       : [publish_files: false]
+def publish_index_options  = params.save_reference ? [publish_dir: 'genome/index'] : [publish_files: false]
+
+def hisat2_build_options    = modules['hisat2_build']
+if (!params.save_reference) { hisat2_build_options['publish_files'] = false }
+
 //
 // MODULE: Local to the pipeline
 //
@@ -44,6 +69,7 @@ include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { PREPARE_GENOME } from '../subworkflows/local/prepare_genome' addParams( genome_options: publish_genome_options, index_options: publish_index_options, hisat2_index_options: hisat2_build_options )
 
 /*
 ========================================================================================
@@ -76,8 +102,15 @@ include { MULTIQC    } from '../modules/nf-core/modules/multiqc/main'       addP
 def multiqc_report = []
 
 workflow LLRNASEQ {
-
+    //
+    // SUBWORKFLOW: Uncompress and prepare reference genome files
+    //
+    PREPARE_GENOME (
+        prepareToolIndices
+    )
     ch_software_versions = Channel.empty()
+    ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.hisat2_version.ifEmpty(null))
+
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
