@@ -60,6 +60,18 @@ def publish_index_options  = params.save_reference ? [publish_dir: 'genome/index
 def hisat2_build_options    = modules['hisat2_build']
 if (!params.save_reference) { hisat2_build_options['publish_files'] = false }
 
+def samtools_sort_genome_options  = modules['samtools_sort_genome']
+def samtools_index_genome_options = modules['samtools_index_genome']
+samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
+
+
+// Block for conditional publishing of alignment files
+if (['hisat2'].contains( params.aligner )) {
+    samtools_sort_genome_options.publish_files.put('bam','')
+    samtools_index_genome_options.publish_files.put('bai','')
+    samtools_index_genome_options.publish_files.put('csi','')
+}
+
 //
 // MODULE: Local to the pipeline
 //
@@ -91,10 +103,14 @@ def trimgalore_options    = modules['trimgalore']
 trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
 if (params.save_trimmed)  { trimgalore_options.publish_files.put('fq.gz','') }
 
+def hisat2_align_options         = modules['hisat2_align']
+if (params.save_align_intermeds) { hisat2_align_options.publish_files.put('bam','') }
+if (params.save_unaligned)       { hisat2_align_options.publish_files.put('fastq.gz','unmapped') }
+
 include { CAT_FASTQ         } from '../modules/nf-core/modules/cat/fastq/main' addParams( options: cat_fastq_options )
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
 include { MULTIQC           } from '../modules/nf-core/modules/multiqc/main'   addParams( options: multiqc_options    )
-
+include { ALIGN_HISAT2      } from '../subworkflows/nf-core/align_hisat2'      addParams( align_options: hisat2_align_options, samtools_sort_options: samtools_sort_genome_options, samtools_index_options: samtools_index_genome_options, samtools_stats_options: samtools_index_genome_options )
 /*
 ========================================================================================
     RUN MAIN WORKFLOW
@@ -155,6 +171,47 @@ workflow LLRNASEQ {
     ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
     ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
 
+    ch_trimmed_reads     = FASTQC_TRIMGALORE.out.reads
+
+//
+    // SUBWORKFLOW: Alignment with HISAT2
+    //
+    ch_hisat2_multiqc = Channel.empty()
+    if (!params.skip_alignment && params.aligner == 'hisat2') {
+        ALIGN_HISAT2 (
+            ch_trimmed_reads,
+            PREPARE_GENOME.out.hisat2_index,
+            PREPARE_GENOME.out.splicesites
+        )
+        ch_genome_bam        = ALIGN_HISAT2.out.bam
+        ch_genome_bam_index  = ALIGN_HISAT2.out.bai
+        ch_samtools_stats    = ALIGN_HISAT2.out.stats
+        ch_samtools_flagstat = ALIGN_HISAT2.out.flagstat
+        ch_samtools_idxstats = ALIGN_HISAT2.out.idxstats
+        ch_hisat2_multiqc    = ALIGN_HISAT2.out.summary
+        if (params.bam_csi_index) {
+            ch_genome_bam_index  = ALIGN_HISAT2.out.csi
+        }
+        ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.hisat2_version.first().ifEmpty(null))
+        ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.samtools_version.first().ifEmpty(null))
+
+        //
+        // SUBWORKFLOW: Remove duplicate reads from BAM file based on UMIs
+        //
+        // if (params.with_umi) {
+        //     DEDUP_UMI_UMITOOLS_GENOME (
+        //         ch_genome_bam.join(ch_genome_bam_index, by: [0])
+        //     )
+        //     ch_genome_bam        = DEDUP_UMI_UMITOOLS_GENOME.out.bam
+        //     ch_genome_bam_index  = DEDUP_UMI_UMITOOLS_GENOME.out.bai
+        //     ch_samtools_stats    = DEDUP_UMI_UMITOOLS_GENOME.out.stats
+        //     ch_samtools_flagstat = DEDUP_UMI_UMITOOLS_GENOME.out.flagstat
+        //     ch_samtools_idxstats = DEDUP_UMI_UMITOOLS_GENOME.out.idxstats
+        //     if (params.bam_csi_index) {
+        //         ch_genome_bam_index  = DEDUP_UMI_UMITOOLS_GENOME.out.csi
+        //     }
+        // }
+    }
     //
     // MODULE: Pipeline reporting
     //
