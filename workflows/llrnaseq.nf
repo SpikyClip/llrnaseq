@@ -54,33 +54,23 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 // Don't overwrite global params.modules, create a copy instead and use that within the main script.
 def modules = params.modules.clone()
 
+//
+// MODULE: Local to the pipeline
+//
+
+include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
+
+//
+// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
+//
+
 def publish_genome_options = params.save_reference ? [publish_dir: 'genome']       : [publish_files: false]
 def publish_index_options  = params.save_reference ? [publish_dir: 'genome/index'] : [publish_files: false]
 
 def hisat2_build_options    = modules['hisat2_build']
 if (!params.save_reference) { hisat2_build_options['publish_files'] = false }
 
-def samtools_sort_genome_options  = modules['samtools_sort_genome']
-def samtools_index_genome_options = modules['samtools_index_genome']
-samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
-
-
-// Block for conditional publishing of alignment files
-if (['hisat2'].contains( params.aligner )) {
-    samtools_sort_genome_options.publish_files.put('bam','')
-    samtools_index_genome_options.publish_files.put('bai','')
-    samtools_index_genome_options.publish_files.put('csi','')
-}
-
-//
-// MODULE: Local to the pipeline
-//
-include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
-
-//
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
-include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { INPUT_CHECK    } from '../subworkflows/local/input_check'    addParams( options: [:] )
 include { PREPARE_GENOME } from '../subworkflows/local/prepare_genome' addParams( genome_options: publish_genome_options, index_options: publish_index_options, hisat2_index_options: hisat2_build_options )
 
 /*
@@ -99,6 +89,16 @@ if (!params.save_merged_fastq) { cat_fastq_options['publish_files'] = false }
 def multiqc_options       = modules['multiqc']
 multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
 
+def featurecounts_options = modules['subreads_featurecounts']
+
+include { CAT_FASTQ             } from '../modules/nf-core/modules/cat/fastq/main'             addParams( options: cat_fastq_options     )
+include { MULTIQC               } from '../modules/nf-core/modules/multiqc/main'               addParams( options: multiqc_options       )
+include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/modules/subread/featurecounts/main' addParams( options: featurecounts_options )
+
+//
+// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
+//
+
 def trimgalore_options    = modules['trimgalore']
 trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
 if (params.save_trimmed)  { trimgalore_options.publish_files.put('fq.gz','') }
@@ -107,10 +107,20 @@ def hisat2_align_options         = modules['hisat2_align']
 if (params.save_align_intermeds) { hisat2_align_options.publish_files.put('bam','') }
 if (params.save_unaligned)       { hisat2_align_options.publish_files.put('fastq.gz','unmapped') }
 
-include { CAT_FASTQ         } from '../modules/nf-core/modules/cat/fastq/main' addParams( options: cat_fastq_options )
+def samtools_sort_genome_options    = modules['samtools_sort_genome']
+def samtools_index_genome_options   = modules['samtools_index_genome']
+samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
+
+// Block for conditional publishing of alignment files
+if (['hisat2'].contains( params.aligner )) {
+    samtools_sort_genome_options.publish_files.put('bam','')
+    samtools_index_genome_options.publish_files.put('bai','')
+    samtools_index_genome_options.publish_files.put('csi','')
+}
+
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
-include { MULTIQC           } from '../modules/nf-core/modules/multiqc/main'   addParams( options: multiqc_options    )
 include { ALIGN_HISAT2      } from '../subworkflows/nf-core/align_hisat2'      addParams( align_options: hisat2_align_options, samtools_sort_options: samtools_sort_genome_options, samtools_index_options: samtools_index_genome_options, samtools_stats_options: samtools_index_genome_options )
+
 /*
 ========================================================================================
     RUN MAIN WORKFLOW
@@ -151,6 +161,8 @@ workflow LLRNASEQ {
     }
     .set { ch_fastq }
 
+
+
     //
     // MODULE: Concatenate FastQ files from same sample if required
     //
@@ -159,6 +171,7 @@ workflow LLRNASEQ {
     )
     .mix(ch_fastq.single)
     .set { ch_cat_fastq }
+
 
     //
     // MODULE: Run FastQC and trimgalore
@@ -173,7 +186,8 @@ workflow LLRNASEQ {
 
     ch_trimmed_reads     = FASTQC_TRIMGALORE.out.reads
 
-//
+
+    //
     // SUBWORKFLOW: Alignment with HISAT2
     //
     ch_hisat2_multiqc = Channel.empty()
@@ -196,6 +210,28 @@ workflow LLRNASEQ {
         ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.samtools_version.first().ifEmpty(null))
 
     }
+
+    // 
+    // MODULE: Subreads featureCounts
+    // 
+
+    ch_genome_bam
+        .map {
+            meta, bam ->
+            meta_subset = ["strandedness": meta.strandedness, "id": meta.strandedness]
+            [meta_subset, bam]
+        }
+        .groupTuple()
+        .set{ ch_feature_bam }
+
+    ch_feature_bam.view()
+
+    SUBREAD_FEATURECOUNTS (
+        ch_feature_bam,
+        PREPARE_GENOME.out.gtf
+    )
+    ch_software_versions = ch_software_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
+
     //
     // MODULE: Pipeline reporting
     //
