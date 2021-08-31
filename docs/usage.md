@@ -78,7 +78,7 @@ files. the `--sanitise_name` argument (default `false`) allows the extraction
 of a sample name from the file basename. Here, it splits the base name by
 underscores (`_`) and returns the first index group (base 1) as the sample
 name. If `--sanitise_name` is not provided, the sample name defaults to the
-file basename. The `--help` will show the full list of arguments.
+file basename. The `--help` argument will show the full list of arguments.
 
 ## Alignment options
 
@@ -101,7 +101,7 @@ the command-line via the appropriate parameters (e.g. `--hisat2_index
 '/path/to/hisat2/index/'`) or via a custom config file.
 
 * If `--genome` is provided then the FASTA and GTF files (and existing indices) will be automatically obtained from AWS-iGenomes unless these have already been downloaded locally in the path specified by `--igenomes_base`.
-* If `--gene_bed` is not provided then it will be generated from the GTF file.
+<!-- * If `--gene_bed` is not provided then it will be generated from the GTF file. -->
 
 > **NB:** Compressed reference files are also supported by the pipeline i.e. standard files with the `.gz` extension and indices folders with the `tar.gz` extension.
 
@@ -121,13 +121,17 @@ files is slightly different to ENSEMBL genome files:
 The typical command for running the pipeline on the LIMS-HPCC is as follows:
 
 ```console
-nextflow run SpikyClip/rnaseq -r main --input samplesheet.csv --genome GRCh37 -profile lims
+nextflow run SpikyClip/rnaseq -r main \
+-profile lims \
+--input samplesheet.csv \
+--genome GRCh37
 ```
 
 This will launch the pipeline with the `lims` configuration profile. See below
 for more information about profiles.
 
-Note that the pipeline will create the following files in your working directory:
+Note that the pipeline will create the following files in your working
+directory:
 
 ```console
 work            # Directory containing the nextflow working files
@@ -141,7 +145,7 @@ results         # Finished results (configurable, see below)
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```console
-nextflow pull nf-core/rnaseq -r main
+nextflow pull SpikyClip/llrnaseq -r main
 ```
 
 <!-- ### Reproducibility

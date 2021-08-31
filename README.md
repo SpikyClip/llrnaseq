@@ -9,7 +9,7 @@ CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000
 [![Cite with
 Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.04.0-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.04.3-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
 [![run with
 conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with
@@ -60,10 +60,14 @@ On release, automated continuous integration tests run the pipeline on a full-si
 3. Trim reads ([`Trim
    Galore`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
 4. Index genome ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
+5. Align reads ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
+6. Sort and index alignments ([`Samtools`](http://www.htslib.org/))
+7. Read quantification ([`featureCounts`](http://subread.sourceforge.net/))
 
 ## Quick Start
 
-1. Install [`Nextflow`](docs/installation.md) (`>=21.04.0`)
+1. Install [`Nextflow`](https://nf-co.re/usage/installation) (`>=21.04.3`) (see
+   [`installation.md`](docs/installation.md) for more information)
 
 2. If executing the pipeline on a computer that can support it, install any of
    [`Docker`](https://docs.docker.com/engine/installation/),
@@ -110,8 +114,9 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 4. Start running your own analysis!
 
-   1. You will first need to create a samplesheet with information about the
-      samples you would like to analyse before running the pipeline.
+   1. You will first need to [create a samplesheet](docs/usage.md) with
+      information about the samples you would like to analyse before running
+      the pipeline.
 
    2. The pipeline can pull some common genome references used for alignment
       from [Illumina iGenomes](https://nf-co.re/usage/reference_genomes). Check
@@ -119,7 +124,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
       iGenomes this pipeline recognises.
 
       ```
-      nextflow run llrnaseq \
+      nextflow run llrnaseq -r main \
           -profile lims \
           --input <samplesheet>.csv \
           --genome GRCh37
@@ -127,12 +132,22 @@ On release, automated continuous integration tests run the pipeline on a full-si
    3. Alternatively, you can specify `genome.fa` and `genome.gtf` explicitly:
 
       ```
-      nextflow run llrnaseq \
+      nextflow run llrnaseq -r main \
           -profile lims \
           --input <samplesheet>.csv \
           --fasta <genome>.fa> \
           --gtf <annotation>.gtf
       ```
+   4. If running a job on the LIMS-HPCC, wrap the `nextflow run` command in a
+      shell script (e.g. `run_pipeline.sh`) and submit it using `slurm`:
+
+      ```console
+      sbatch run_pipeline.sh
+      ```
+      Consider specifying the estimated time needed in the script if the job
+      may take more than 8 hours using `#SBATCH --time=<HH>:<MM>:<SS>`. This is
+      to avoid the pipeline ending prematurely. However, if the job is
+      interrupted, it may be resumed with the nextflow `-resume` flag.
 
 ## Documentation
 
@@ -154,9 +169,9 @@ of this pipeline:
 If you would like to contribute to this pipeline, please see the [contributing
 guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on the [Slack
+<!-- For further information or help, don't hesitate to get in touch on the [Slack
 `#llrnaseq` channel](https://nfcore.slack.com/channels/llrnaseq) (you can join
-with [this invite](https://nf-co.re/join/slack)).
+with [this invite](https://nf-co.re/join/slack)). -->
 
 ## Citations
 
