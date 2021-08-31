@@ -224,8 +224,6 @@ workflow LLRNASEQ {
         .groupTuple()
         .set{ ch_feature_bam }
 
-    ch_feature_bam.view()
-
     SUBREAD_FEATURECOUNTS (
         ch_feature_bam,
         PREPARE_GENOME.out.gtf
