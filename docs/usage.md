@@ -56,7 +56,7 @@ pipeline.
 > pipeline, to regain the ability to represent different groupings.
 
 ### Create a samplesheet from a directory of fastq files
-An executable Python script called fastq_dir_to_samplesheet.py has been
+An executable Python script called `fastq_dir_to_samplesheet.py` has been
 provided if you would like to auto-create an input samplesheet based on a
 directory containing FastQ files before you run the pipeline (requires Python 3
 installed locally) e.g.
