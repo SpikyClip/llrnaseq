@@ -42,6 +42,16 @@
                 "seq_center": {
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files."
+                },
+                "stringtie_ignore_gtf": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-ban",
+                    "description": "Perform reference-guided de novo assembly of transcripts using StringTie i.e. dont restrict to those in GTF file."
+                },
+                "save_stringtie_intermeds": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-save",
+                    "description": "Save intermediate StringTie files produced in the first StringTie pass."
                 }
             }
         },
@@ -61,6 +71,16 @@
                     "type": "boolean",
                     "description": "Skip FastQC.",
                     "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_stringtie": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-fast-forward",
+                    "description": "Skip StringTie."
+                },
+                "skip_multiqc": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-fast-forward",
+                    "description": "Skip MultiQC."
                 }
             }
         },

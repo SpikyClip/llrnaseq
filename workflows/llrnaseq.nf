@@ -13,7 +13,6 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowLlrnaseq.initialise(params, log, valid_params)
 
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
 def checkPathParamList = [
     params.input, params.multiqc_config, 
@@ -91,22 +90,10 @@ multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--titl
 
 def featurecounts_options = modules['subreads_featurecounts']
 
-// def stringtie_one_options       = modules['stringtie_one']
-// stringtie_one_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
-// if (!params.save_intermeds_stringtie) { stringtie_one_options['publish_files'] = false }
-
-// def stringtie_merge_options = modules['stringtie_merge']
-
-// def stringtie_two_options       = modules['stringtie_two']
-
 
 include { CAT_FASTQ             } from '../modules/nf-core/modules/cat/fastq/main'             addParams( options: cat_fastq_options       )
 include { MULTIQC               } from '../modules/nf-core/modules/multiqc/main'               addParams( options: multiqc_options         )
 include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/modules/subread/featurecounts/main' addParams( options: featurecounts_options   )
-// include { STRINGTIE as STRINGTIE_ONE} from '../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: stringtie_one_options       )
-// include { STRINGTIE as STRINGTIE_TWO} from '../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: stringtie_two_options       )
-// include { STRINGTIE_MERGE       } from '../modules/nf-core/modules/stringtie/merge/main'       addParams( options: stringtie_merge_options )
-
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -137,11 +124,12 @@ if (['hisat2'].contains( params.aligner )) {
 // Stringtie
 def stringtie_1_options       = modules['stringtie_1']
 stringtie_1_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
-if (!params.save_intermeds_stringtie) { stringtie_1_options['publish_files'] = false }
+if (!params.save_stringtie_intermeds) { stringtie_1_options['publish_files'] = false }
 
 def stringtie_two_options       = modules['stringtie_2']
 
 def stringtie_merge_options = modules['stringtie_merge']
+
 
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
 include { ALIGN_HISAT2      } from '../subworkflows/nf-core/align_hisat2'      addParams( align_options: hisat2_align_options, samtools_sort_options: samtools_sort_genome_options, samtools_index_options: samtools_index_genome_options, samtools_stats_options: samtools_index_genome_options )
@@ -157,14 +145,15 @@ include { STRINGTIE_DE      } from '../subworkflows/nf-core/stringtie'         a
 def multiqc_report = []
 
 workflow LLRNASEQ {
+    ch_software_versions = Channel.empty()
+
+
     //
     // SUBWORKFLOW: Uncompress and prepare reference genome files
     //
     PREPARE_GENOME (
         prepareToolIndices
     )
-    ch_software_versions = Channel.empty()
-    ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.hisat2_version.ifEmpty(null))
 
 
     //
@@ -188,7 +177,6 @@ workflow LLRNASEQ {
     .set { ch_fastq }
 
 
-
     //
     // MODULE: Concatenate FastQ files from same sample if required
     //
@@ -207,9 +195,6 @@ workflow LLRNASEQ {
         params.skip_fastqc || params.skip_qc,
         params.skip_trimming
     )
-    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
-    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
-
     ch_trimmed_reads     = FASTQC_TRIMGALORE.out.reads
 
 
@@ -234,7 +219,6 @@ workflow LLRNASEQ {
         }
         ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.hisat2_version.first().ifEmpty(null))
         ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.samtools_version.first().ifEmpty(null))
-
     }
 
     // 
@@ -254,38 +238,30 @@ workflow LLRNASEQ {
         ch_feature_bam,
         PREPARE_GENOME.out.gtf
     )
-    ch_software_versions = ch_software_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
 
     // 
     // MODULE: Stringtie
     // 
 
-    STRINGTIE_DE( ch_genome_bam, PREPARE_GENOME.out.gtf )
+    if (!params.skip_alignment && !params.skip_stringtie) {
+        STRINGTIE_DE(
+            ch_genome_bam,
+            PREPARE_GENOME.out.gtf
+            )
+        ch_software_versions = ch_software_versions.mix(STRINGTIE_DE.out.version.first().ifEmpty(null))
+    }
 
-    // STRINGTIE_ONE(
-    //     ch_genome_bam,
-    //     PREPARE_GENOME.out.gtf
-    //     )
-    // ch_software_versions = ch_software_versions.mix(STRINGTIE_ONE.out.version.first().ifEmpty(null))
-
-    // STRINGTIE_ONE.out.transcript_gtf
-    //     .map { meta, gtf -> gtf }
-    //     .collect()
-    //     .set{ ch_stringtie_all_gtf }
-
-    // STRINGTIE_MERGE(
-    //     ch_stringtie_all_gtf,
-    //     PREPARE_GENOME.out.gtf
-    // )
-
-    // STRINGTIE_TWO(
-    //     ch_genome_bam,
-    //     STRINGTIE_MERGE.out.gtf
-    // )
 
     //
     // MODULE: Pipeline reporting
     //
+
+    // Gather software versions
+    ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.hisat2_version.ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
+
     ch_software_versions
         .map { it -> if (it) [ it.baseName, it ] }
         .groupTuple()
@@ -301,27 +277,30 @@ workflow LLRNASEQ {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowLlrnaseq.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_zip.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_log.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_multiqc.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_stats.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_flagstat.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_idxstats.collect{it[1]}.ifEmpty([]))
+    if (!params.skip_multiqc) {
+        workflow_summary    = WorkflowLlrnaseq.paramsSummaryMultiqc(workflow, summary_params)
+        ch_workflow_summary = Channel.value(workflow_summary)
 
-    MULTIQC (
-        ch_multiqc_files.collect()
-    )
-    multiqc_report       = MULTIQC.out.report.toList()
-    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+        ch_multiqc_files = Channel.empty()
+        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_zip.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMGALORE.out.trim_log.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_multiqc.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_stats.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_flagstat.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_samtools_idxstats.collect{it[1]}.ifEmpty([]))
+
+        MULTIQC (
+            ch_multiqc_files.collect()
+        )
+        multiqc_report       = MULTIQC.out.report.toList()
+        ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    }
 }
 
 /*

@@ -6,9 +6,10 @@ params.st_pass_1_options = [:]
 params.st_pass_2_options = [:]
 params.st_merge_options  = [:]
 
-include { STRINGTIE as STRINGTIE_ONE } from '../../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: params.st_pass_1_options )
-include { STRINGTIE as STRINGTIE_TWO } from '../../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: params.st_pass_2_options )
-include { STRINGTIE_MERGE            } from '../../modules/nf-core/modules/stringtie/merge/main'       addParams( options: params.st_merge_options  )
+include { STRINGTIE as STRINGTIE_ONE } from '../../modules/nf-core/modules/stringtie/stringtie/main' addParams( options: params.st_pass_1_options )
+include { STRINGTIE as STRINGTIE_TWO } from '../../modules/nf-core/modules/stringtie/stringtie/main' addParams( options: params.st_pass_2_options )
+include { STRINGTIE_MERGE            } from '../../modules/nf-core/modules/stringtie/merge/main'     addParams( options: params.st_merge_options  )
+include { COLLATE_TPM                } from '../../modules/local/collate_tpm'
 
 workflow STRINGTIE_DE {
     take:
@@ -37,6 +38,17 @@ workflow STRINGTIE_DE {
     // 
     STRINGTIE_TWO( bam, STRINGTIE_MERGE.out.gtf )
 
+    // 
+    // Collate all tpm counts for each sample
+    // 
+
+    STRINGTIE_TWO.out.abundance
+    .map { meta, abundance -> abundance}
+    .collect()
+    .set{ tpm_paths }
+
+    COLLATE_TPM( tpm_paths )
+
     emit:
     pass_1_coverage_gtf   = STRINGTIE_ONE.out.coverage_gtf
     pass_1_transcript_gtf = STRINGTIE_ONE.out.transcript_gtf
@@ -47,6 +59,8 @@ workflow STRINGTIE_DE {
     pass_2_transcript_gtf = STRINGTIE_TWO.out.transcript_gtf
     pass_2_abundance      = STRINGTIE_TWO.out.abundance
     pass_2_ballgown       = STRINGTIE_TWO.out.ballgown
+
+    pass_2_tpm            = COLLATE_TPM.out.tpm
 
     version               = STRINGTIE_ONE.out.version
 }
