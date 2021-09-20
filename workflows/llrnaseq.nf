@@ -91,22 +91,38 @@ multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--titl
 
 def featurecounts_options = modules['subreads_featurecounts']
 
-include { CAT_FASTQ             } from '../modules/nf-core/modules/cat/fastq/main'             addParams( options: cat_fastq_options     )
-include { MULTIQC               } from '../modules/nf-core/modules/multiqc/main'               addParams( options: multiqc_options       )
-include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/modules/subread/featurecounts/main' addParams( options: featurecounts_options )
+// def stringtie_one_options       = modules['stringtie_one']
+// stringtie_one_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
+// if (!params.save_intermeds_stringtie) { stringtie_one_options['publish_files'] = false }
+
+// def stringtie_merge_options = modules['stringtie_merge']
+
+// def stringtie_two_options       = modules['stringtie_two']
+
+
+include { CAT_FASTQ             } from '../modules/nf-core/modules/cat/fastq/main'             addParams( options: cat_fastq_options       )
+include { MULTIQC               } from '../modules/nf-core/modules/multiqc/main'               addParams( options: multiqc_options         )
+include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/modules/subread/featurecounts/main' addParams( options: featurecounts_options   )
+// include { STRINGTIE as STRINGTIE_ONE} from '../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: stringtie_one_options       )
+// include { STRINGTIE as STRINGTIE_TWO} from '../modules/nf-core/modules/stringtie/stringtie/main'   addParams( options: stringtie_two_options       )
+// include { STRINGTIE_MERGE       } from '../modules/nf-core/modules/stringtie/merge/main'       addParams( options: stringtie_merge_options )
+
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 
+// Trimgalore
 def trimgalore_options    = modules['trimgalore']
 trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
 if (params.save_trimmed)  { trimgalore_options.publish_files.put('fq.gz','') }
 
+// Hisat2
 def hisat2_align_options         = modules['hisat2_align']
 if (params.save_align_intermeds) { hisat2_align_options.publish_files.put('bam','') }
 if (params.save_unaligned)       { hisat2_align_options.publish_files.put('fastq.gz','unmapped') }
 
+// Samtools
 def samtools_sort_genome_options    = modules['samtools_sort_genome']
 def samtools_index_genome_options   = modules['samtools_index_genome']
 samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
@@ -118,8 +134,18 @@ if (['hisat2'].contains( params.aligner )) {
     samtools_index_genome_options.publish_files.put('csi','')
 }
 
+// Stringtie
+def stringtie_1_options       = modules['stringtie_1']
+stringtie_1_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
+if (!params.save_intermeds_stringtie) { stringtie_1_options['publish_files'] = false }
+
+def stringtie_two_options       = modules['stringtie_2']
+
+def stringtie_merge_options = modules['stringtie_merge']
+
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
 include { ALIGN_HISAT2      } from '../subworkflows/nf-core/align_hisat2'      addParams( align_options: hisat2_align_options, samtools_sort_options: samtools_sort_genome_options, samtools_index_options: samtools_index_genome_options, samtools_stats_options: samtools_index_genome_options )
+include { STRINGTIE_DE      } from '../subworkflows/nf-core/stringtie'         addParams( st_pass_1_options: stringtie_1_options, st_pass_2_options: stringtie_two_options, st_merge_options: stringtie_merge_options )
 
 /*
 ========================================================================================
@@ -229,6 +255,33 @@ workflow LLRNASEQ {
         PREPARE_GENOME.out.gtf
     )
     ch_software_versions = ch_software_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
+
+    // 
+    // MODULE: Stringtie
+    // 
+
+    STRINGTIE_DE( ch_genome_bam, PREPARE_GENOME.out.gtf )
+
+    // STRINGTIE_ONE(
+    //     ch_genome_bam,
+    //     PREPARE_GENOME.out.gtf
+    //     )
+    // ch_software_versions = ch_software_versions.mix(STRINGTIE_ONE.out.version.first().ifEmpty(null))
+
+    // STRINGTIE_ONE.out.transcript_gtf
+    //     .map { meta, gtf -> gtf }
+    //     .collect()
+    //     .set{ ch_stringtie_all_gtf }
+
+    // STRINGTIE_MERGE(
+    //     ch_stringtie_all_gtf,
+    //     PREPARE_GENOME.out.gtf
+    // )
+
+    // STRINGTIE_TWO(
+    //     ch_genome_bam,
+    //     STRINGTIE_MERGE.out.gtf
+    // )
 
     //
     // MODULE: Pipeline reporting
