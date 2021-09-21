@@ -124,7 +124,7 @@ files is slightly different to ENSEMBL genome files:
 The typical command for running the pipeline on the LIMS-HPCC is as follows:
 
 ```console
-nextflow run SpikyClip/rnaseq -r main \
+nextflow run SpikyClip/rnaseq \
 -profile lims \
 --input samplesheet.csv \
 --genome GRCh37
@@ -145,10 +145,15 @@ results         # Finished results (configurable, see below)
 
 ### Updating the pipeline
 
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
+When you run the above command, Nextflow automatically pulls the pipeline code
+from GitHub and stores it as a cached version. When running the pipeline after
+this, it will always use the cached version if available - even if the pipeline
+has been updated since. To make sure that you're running the latest version of
+the pipeline, make sure that you regularly update the cached version of the
+pipeline:
 
 ```console
-nextflow pull SpikyClip/llrnaseq -r main
+nextflow pull SpikyClip/llrnaseq
 ```
 
 ## Core Nextflow arguments
@@ -229,7 +234,7 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 To see a full list of arguments execute the following command:
 ```console
-nextflow run SpikyClip/llrnaseq -r main --help
+nextflow run SpikyClip/llrnaseq --help
 ```
 
 ## Custom configuration

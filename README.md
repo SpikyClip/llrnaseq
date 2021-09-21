@@ -63,11 +63,11 @@ LIMS-HPCC is updated to support them in the future.
        ```
        module load java/1.8.0_66
 
-       nextflow run SpikyClip/llrnaseq -r main -profile test,lims
+       nextflow run SpikyClip/llrnaseq -profile test,lims
        ```
     2. If running on a `Docker`/`Singularity` capable machine:
        ```
-       nextflow run SpikyClip/llrnaseq -r main -profile test,<docker/singularity/podman/shifter/charliecloud/conda/institute>
+       nextflow run SpikyClip/llrnaseq -profile test,<docker/singularity/podman/shifter/charliecloud/conda/institute>
        ```
     > * If you are using `singularity` then the pipeline will auto-detect this
     >   and attempt to download the Singularity images directly as opposed to
@@ -101,7 +101,7 @@ LIMS-HPCC is updated to support them in the future.
       iGenomes this pipeline recognises.
 
       ```
-      nextflow run llrnaseq -r main \
+      nextflow run llrnaseq \
           -profile lims \
           --input <samplesheet>.csv \
           --genome GRCh37
@@ -109,7 +109,7 @@ LIMS-HPCC is updated to support them in the future.
    3. Alternatively, you can specify `genome.fa` and `genome.gtf` explicitly:
 
       ```
-      nextflow run llrnaseq -r main \
+      nextflow run llrnaseq \
           -profile lims \
           --input <samplesheet>.csv \
           --fasta <genome>.fa> \
