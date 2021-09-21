@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/llrnaseq
+    SpikyClip/llrnaseq
 ========================================================================================
-    Github : https://github.com/nf-core/llrnaseq
-    Website: https://nf-co.re/llrnaseq
-    Slack  : https://nfcore.slack.com/channels/llrnaseq
+    Github : https://github.com/SpikyClip/llrnaseq
 ----------------------------------------------------------------------------------------
 */
 
@@ -38,7 +36,7 @@ WorkflowMain.initialise(workflow, params, log)
 include { LLRNASEQ } from './workflows/llrnaseq'
 
 //
-// WORKFLOW: Run main nf-core/llrnaseq analysis pipeline
+// WORKFLOW: Run main SpikyClip/llrnaseq analysis pipeline
 //
 workflow NFCORE_LLRNASEQ {
     LLRNASEQ ()
@@ -52,7 +50,6 @@ workflow NFCORE_LLRNASEQ {
 
 //
 // WORKFLOW: Execute a single named workflow for the pipeline
-// See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
     NFCORE_LLRNASEQ ()

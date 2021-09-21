@@ -1,2 +1,4 @@
-files_unchanged:
-  - bin/scrape_software_versions.py
+lint:
+  files_unchanged:
+    - bin/scrape_software_versions.py
+    - docs/README.md

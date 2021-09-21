@@ -1,14 +1,4 @@
-# ![nf-core/llrnaseq](docs/images/nf-core-llrnaseq_logo.png)
-
-[![GitHub Actions CI
-Status](https://github.com/nf-core/llrnaseq/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/llrnaseq/actions?query=workflow%3A%22nf-core+CI%22)
-[![GitHub Actions Linting
-Status](https://github.com/nf-core/llrnaseq/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/llrnaseq/actions?query=workflow%3A%22nf-core+linting%22)
-[![AWS
-CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/llrnaseq/results)
-[![Cite with
-Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
-
+# SpikyClip/llrnaseq
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.04.3-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
 [![run with
 conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
@@ -17,24 +7,16 @@ docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&
 [![run with
 singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-[![Get help on
-Slack](http://img.shields.io/badge/slack-nf--core%20%23llrnaseq-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/llrnaseq)
-[![Follow on
-Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)
-[![Watch on
-YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
-
 ## Introduction
 
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 **SpikyClip/llrnaseq** is a simple RNA-seq pipeline adapted to the Latrobe
 Institute of Molecular Science (LIMS) High Performance Computing Cluster
 (HPCC).
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow
 tool to run tasks across multiple compute infrastructures in a very portable
-manner. It uses Docker/Singularity containers making installation trivial and
-results highly reproducible. The [Nextflow
+manner. It typically uses Docker/Singularity containers making installation
+trivial and results highly reproducible. The [Nextflow
 DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this
 pipeline uses one container per process which makes it much easier to maintain
 and update software dependencies. 
@@ -47,12 +29,7 @@ options to use the other native `docker` and `singularity` profiles which
 should work if run on a computer that has access to those programs, or if the
 LIMS-HPCC is updated to support them in the future.
 
-<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable
-On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/llrnaseq/results). -->
-
 ## Pipeline summary
-
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 1. Read QC
    ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
@@ -62,7 +39,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 4. Index genome ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
 5. Align reads ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
 6. Sort and index alignments ([`Samtools`](http://www.htslib.org/))
-7. Read quantification ([`featureCounts`](http://subread.sourceforge.net/))
+7. Read quantification ([`featureCounts`](http://subread.sourceforge.net/), [`StringTie`](https://ccb.jhu.edu/software/stringtie/))
 
 ## Quick Start
 
@@ -162,9 +139,12 @@ SpikyClip/llrnaseq was originally written by Vikesh Ajith.
 We thank the following people for their extensive assistance in the development
 of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
-
 ## Contributions and Support
+
+This applied research project was supervised by [Dr. Mathew
+Lewsey](https://scholars.latrobe.edu.au/mlewsey) and [Dr. Bhavna
+Hurgobin](https://scholars.latrobe.edu.au/bhurgobin) from
+[lewseylab](http://www.lewseylab.org/).
 
 If you would like to contribute to this pipeline, please see the [contributing
 guidelines](.github/CONTRIBUTING.md).
@@ -175,10 +155,6 @@ with [this invite](https://nf-co.re/join/slack)). -->
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/llrnaseq for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 An extensive list of references for the tools used by the pipeline can be found
 in the [`CITATIONS.md`](CITATIONS.md) file.
 
