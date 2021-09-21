@@ -57,7 +57,7 @@ process HISAT2_ALIGN {
             $options.args \\
             | samtools view -bS -F 4 -F 256 - > ${prefix}.bam
 
-        hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > hisat.version.txt > ${software}.version.txt
+        hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > ${software}.version.txt
         """
     } else {
         def unaligned = params.save_unaligned ? "--un-conc-gz ${prefix}.unmapped.fastq.gz" : ''
