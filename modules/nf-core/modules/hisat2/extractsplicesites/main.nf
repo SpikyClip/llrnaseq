@@ -4,8 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-def VERSION = '2.2.0'
-
 process HISAT2_EXTRACTSPLICESITES {
     tag "$gtf"
     label 'process_medium'
@@ -31,6 +29,6 @@ process HISAT2_EXTRACTSPLICESITES {
     def software = getSoftwareName(task.process)
     """
     hisat2_extract_splice_sites.py $gtf > ${gtf.baseName}.splice_sites.txt
-    echo $VERSION > ${software}.version.txt
+    hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > ${software}.version.txt
     """
 }

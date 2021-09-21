@@ -4,8 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-def VERSION = '2.2.0'
-
 process HISAT2_BUILD {
     tag "$fasta"
     label 'process_high'
@@ -65,6 +63,6 @@ process HISAT2_BUILD {
         $fasta \\
         hisat2/${fasta.baseName}
 
-    echo $VERSION > ${software}.version.txt
+    hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > ${software}.version.txt
     """
 }

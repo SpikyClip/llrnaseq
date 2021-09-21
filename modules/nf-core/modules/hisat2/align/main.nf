@@ -4,8 +4,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-def VERSION = '2.2.0'
-
 process HISAT2_ALIGN {
     tag "$meta.id"
     label 'process_high'
@@ -59,7 +57,7 @@ process HISAT2_ALIGN {
             $options.args \\
             | samtools view -bS -F 4 -F 256 - > ${prefix}.bam
 
-        echo $VERSION > ${software}.version.txt
+        hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > hisat.version.txt > ${software}.version.txt
         """
     } else {
         def unaligned = params.save_unaligned ? "--un-conc-gz ${prefix}.unmapped.fastq.gz" : ''
@@ -87,7 +85,7 @@ process HISAT2_ALIGN {
             mv ${prefix}.unmapped.fastq.2.gz ${prefix}.unmapped_2.fastq.gz
         fi
 
-        echo $VERSION > ${software}.version.txt
+        hisat2 --version |sed -n 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/p' > ${software}.version.txt
         """
     }
 }
