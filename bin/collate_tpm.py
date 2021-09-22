@@ -21,8 +21,8 @@ def collate_tpm(tpm_paths):
         df = pd.read_csv(
             path,
             sep="\t",
-            index_col=[0, 1],
-            usecols=["Gene ID", "Gene Name", "TPM"],
+            index_col=0,
+            usecols=["Gene ID", "TPM"],
         )
         df.rename(columns={"TPM": sample_name}, inplace=True)
 
@@ -33,7 +33,7 @@ def collate_tpm(tpm_paths):
             tpm_df = pd.concat([tpm_df, df], axis="columns")
 
     # Provide machine-friendly index names
-    tpm_df.index.set_names(["gene_id", "gene_name"], inplace=True)
+    tpm_df.index.set_names(["gene_id"], inplace=True)
 
     return tpm_df
 
