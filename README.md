@@ -32,14 +32,14 @@ LIMS-HPCC is updated to support them in the future.
 ## Pipeline summary
 
 1. Read QC
-   ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+   ([`FastQC 0.11.9`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+2. Present QC for raw reads ([`MultiQC 1.9`](http://multiqc.info/))
 3. Trim reads ([`Trim
-   Galore`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
-4. Index genome ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
-5. Align reads ([`Hisat2`](http://daehwankimlab.github.io/hisat2/))
-6. Sort and index alignments ([`Samtools`](http://www.htslib.org/))
-7. Read quantification ([`featureCounts`](http://subread.sourceforge.net/), [`StringTie`](https://ccb.jhu.edu/software/stringtie/))
+   Galore 0.6.3`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
+4. Index genome ([`Hisat2.1.0`](http://daehwankimlab.github.io/hisat2/))
+5. Align reads ([`Hisat2.1.0`](http://daehwankimlab.github.io/hisat2/))
+6. Sort and index alignments ([`Samtools 1.9`](http://www.htslib.org/))
+7. Read quantification ([`featureCounts 1.6`](http://subread.sourceforge.net/), [`StringTie 1.3.5`](https://ccb.jhu.edu/software/stringtie/))
 
 ## Quick Start
 
