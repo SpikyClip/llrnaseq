@@ -62,7 +62,7 @@ directory containing FastQ files before you run the pipeline (requires Python 3
 installed locally) e.g.
 
 ```console
-wget -L https://raw.githubusercontent.com/SpikyClip/llrnaseq/main/bin/fastq_dir_to_samplesheet.py
+wget -L https://raw.githubusercontent.com/SpikyClip/llrnaseq/master/bin/fastq_dir_to_samplesheet.py
 
 ./fastq_dir_to_samplesheet.py <FASTQ_DIR> samplesheet.csv \
 --strandedness reverse \
