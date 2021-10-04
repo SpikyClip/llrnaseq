@@ -122,18 +122,13 @@ if (['hisat2'].contains( params.aligner )) {
 }
 
 // Stringtie
-def stringtie_1_options       = modules['stringtie_1']
-stringtie_1_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
-if (!params.save_stringtie_intermeds) { stringtie_1_options['publish_files'] = false }
-
-def stringtie_two_options       = modules['stringtie_2']
-
-def stringtie_merge_options = modules['stringtie_merge']
+def stringtie_options   = modules['stringtie']
+stringtie_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
 
 
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
 include { ALIGN_HISAT2      } from '../subworkflows/nf-core/align_hisat2'      addParams( align_options: hisat2_align_options, samtools_sort_options: samtools_sort_genome_options, samtools_index_options: samtools_index_genome_options, samtools_stats_options: samtools_index_genome_options )
-include { STRINGTIE_DE      } from '../subworkflows/nf-core/stringtie'         addParams( st_pass_1_options: stringtie_1_options, st_pass_2_options: stringtie_two_options, st_merge_options: stringtie_merge_options )
+include { STRINGTIE_TPM     } from '../subworkflows/nf-core/stringtie'         addParams( stringtie_options: stringtie_options )
 
 /*
 ========================================================================================
@@ -244,11 +239,11 @@ workflow LLRNASEQ {
     // 
 
     if (!params.skip_alignment && !params.skip_stringtie) {
-        STRINGTIE_DE(
+        STRINGTIE_TPM(
             ch_genome_bam,
             PREPARE_GENOME.out.gtf
             )
-        ch_software_versions = ch_software_versions.mix(STRINGTIE_DE.out.version.first().ifEmpty(null))
+        ch_software_versions = ch_software_versions.mix(STRINGTIE_TPM.out.version.first().ifEmpty(null))
     }
 
 
