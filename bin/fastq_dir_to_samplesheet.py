@@ -7,11 +7,15 @@ import argparse
 
 
 def parse_args(args=None):
-    Description = "Generate nf-core/rnaseq samplesheet from a directory of FastQ files."
+    Description = (
+        "Generate nf-core/rnaseq samplesheet from a directory of FastQ files."
+    )
     Epilog = "Example usage: python fastq_dir_to_samplesheet.py <FASTQ_DIR> <SAMPLESHEET_FILE>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("FASTQ_DIR", help="Folder containing raw FastQ files.")
+    parser.add_argument(
+        "FASTQ_DIR", type=check_dir, help="Folder containing raw FastQ files."
+    )
     parser.add_argument("SAMPLESHEET_FILE", help="Output samplesheet file.")
     parser.add_argument(
         "-st",
@@ -68,6 +72,11 @@ def parse_args(args=None):
         help="After splitting FastQ file name by --sanitise_name_delimiter all elements before this index (1-based) will be joined to create final sample name.",
     )
     return parser.parse_args(args)
+
+
+def check_dir(fastq_dir):
+    abs_fastq_dir = os.path.abspath(fastq_dir)
+    return abs_fastq_dir
 
 
 def fastq_dir_to_samplesheet(

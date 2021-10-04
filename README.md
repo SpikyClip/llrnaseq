@@ -124,7 +124,9 @@ LIMS-HPCC is updated to support them in the future.
       Consider specifying the estimated time needed in the script if the job
       may take more than 8 hours using `#SBATCH --time=<HH>:<MM>:<SS>`. This is
       to avoid the pipeline ending prematurely. However, if the job is
-      interrupted, it may be resumed with the nextflow `-resume` flag.
+      interrupted, it may be resumed with the nextflow `-resume` flag. See the
+      [usage](docs/usage.md#-resume) docs for more information on the `-resume`
+      flag.
 
 ## Documentation
 
