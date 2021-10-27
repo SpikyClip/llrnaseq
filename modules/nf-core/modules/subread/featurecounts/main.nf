@@ -30,7 +30,6 @@ process SUBREAD_FEATURECOUNTS {
     script:
     def software   = getSoftwareName(task.process)
     def prefix     = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
-    def paired_end = meta.single_end ? '' : '-p'
 
     def strandedness = 0
     if (meta.strandedness == 'forward') {
@@ -41,7 +40,6 @@ process SUBREAD_FEATURECOUNTS {
     """
     featureCounts \\
         $options.args \\
-        $paired_end \\
         -T $task.cpus \\
         -a $annotation \\
         -s $strandedness \\
