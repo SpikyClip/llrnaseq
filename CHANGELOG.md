@@ -1,9 +1,11 @@
 # SpikyClip/llrnaseq: Changelog
 
 ```
-eb597a1 (HEAD -> master) Added collate_tpm.log file to stringtie results folder.
+e20abf6 (HEAD -> master, tag: 0.3.3-dev) Merge branch 'dev'
+4ef02ea (origin/master) Added collate_tpm.log file to stringtie results folder.
+d440af2 (origin/dev, dev) Added collate_tpm.log file to stringtie results folder.
 026e6a0 Fixed an issue caused by Stringtie producing duplicate genes, affecting TPM collation.
-58034ee (tag: 0.3.2-dev, origin/master) removed
+58034ee (tag: 0.3.2-dev) removed
 4a3c2f3 (tag: 0.3.1-dev) Bumped version.
 85d1e15 Merge branch 'dev'
 0ba86d2 Added link to use of -resume in usage.md.
