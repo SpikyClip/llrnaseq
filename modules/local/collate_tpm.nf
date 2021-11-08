@@ -19,6 +19,7 @@ process COLLATE_TPM {
 
     output:
     path("tpm.tsv"), emit: tpm
+    path("collate_tpm.log"), emit: log
 
     shell:
     """
