@@ -8,11 +8,13 @@ process COLLATE_TPM {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'stringtie', meta:[:], publish_by_meta:[]) }
 
     conda (params.enable_conda ? "conda-forge::python=3.8.3" : null)
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/python:3.8.3"
-    } else {
-        container "quay.io/biocontainers/python:3.8.3"
-    }
+    // Pointed to an anaconda docker container with pandas until I can find a 
+    // lightweight container and/or a singularity one.
+    // if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
+    //     container "https://depot.galaxyproject.org/singularity/python:3.8.3"
+    // } else {
+        container "continuumio/anaconda3"
+    // }
 
     input:
     path(abundance)
