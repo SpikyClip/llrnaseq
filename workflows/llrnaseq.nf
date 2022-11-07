@@ -59,7 +59,7 @@ def modules = params.modules.clone()
 // MODULE: Local to the pipeline
 //
 
-include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
+// include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -93,9 +93,10 @@ multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--titl
 def featurecounts_options = modules['subreads_featurecounts']
 
 
-include { CAT_FASTQ             } from '../modules/nf-core/modules/cat/fastq/main'             addParams( options: cat_fastq_options       )
-include { MULTIQC               } from '../modules/nf-core/modules/multiqc/main'               addParams( options: multiqc_options         )
-include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/modules/subread/featurecounts/main' addParams( options: featurecounts_options   )
+include { CAT_FASTQ             } from '../modules/nf-core/cat/fastq/main'             addParams( options: cat_fastq_options       )
+include { MULTIQC               } from '../modules/nf-core/multiqc/main'               addParams( options: multiqc_options         )
+include { SUBREAD_FEATURECOUNTS } from '../modules/nf-core/subread/featurecounts/main' addParams( options: featurecounts_options   )
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -216,8 +217,8 @@ workflow LLRNASEQ {
         if (params.bam_csi_index) {
             ch_genome_bam_index  = ALIGN_HISAT2.out.csi
         }
-        ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.hisat2_version.first().ifEmpty(null))
-        ch_software_versions = ch_software_versions.mix(ALIGN_HISAT2.out.samtools_version.first().ifEmpty(null))
+        ch_versions = ch_versions.mix(ALIGN_HISAT2.out.hisat2_version.first().ifEmpty(null))
+        ch_versions = ch_versions.mix(ALIGN_HISAT2.out.samtools_version.first().ifEmpty(null))
     }
 
     // 
@@ -247,7 +248,7 @@ workflow LLRNASEQ {
             ch_genome_bam,
             PREPARE_GENOME.out.gtf
             )
-        ch_software_versions = ch_software_versions.mix(STRINGTIE_TPM.out.version.first().ifEmpty(null))
+        ch_versions = ch_versions.mix(STRINGTIE_TPM.out.version.first().ifEmpty(null))
     }
 
 
@@ -256,22 +257,22 @@ workflow LLRNASEQ {
     //
 
     // Gather software versions
-    ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.hisat2_version.ifEmpty(null))
-    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
-    ch_software_versions = ch_software_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
-    ch_software_versions = ch_software_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
+    ch_versions = ch_versions.mix(PREPARE_GENOME.out.hisat2_version.ifEmpty(null))
+    ch_versions = ch_versions.mix(FASTQC_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
+    ch_versions = ch_versions.mix(FASTQC_TRIMGALORE.out.trimgalore_version.first().ifEmpty(null))
+    ch_versions = ch_versions.mix(SUBREAD_FEATURECOUNTS.out.version.first().ifEmpty(null))
 
-    ch_software_versions
-        .map { it -> if (it) [ it.baseName, it ] }
-        .groupTuple()
-        .map { it[1][0] }
-        .flatten()
-        .collect()
-        .set { ch_software_versions }
+    // ch_versions
+    //     .map { it -> if (it) [ it.baseName, it ] }
+    //     .groupTuple()
+    //     .map { it[1][0] }
+    //     .flatten()
+    //     .collect()
+    //     .set { ch_versions }
 
-    GET_SOFTWARE_VERSIONS (
-        ch_software_versions.map { it }.collect()
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    // GET_SOFTWARE_VERSIONS (
+    //     ch_software_versions.map { it }.collect()
+    // )
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
