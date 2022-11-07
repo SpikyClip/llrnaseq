@@ -4,7 +4,7 @@
 
 params.stringtie_options = [:]
 
-include { STRINGTIE   } from '../../modules/nf-core/modules/stringtie/stringtie/main' addParams( options: params.stringtie_options )
+include { STRINGTIE   } from '../../modules/nf-core/stringtie/stringtie/main' addParams( options: params.stringtie_options )
 include { COLLATE_TPM } from '../../modules/local/collate_tpm'
 
 workflow STRINGTIE_TPM {

@@ -8,10 +8,10 @@ params.hisat2_index_options = [:]
 
 include {
     GUNZIP as GUNZIP_FASTA
-    GUNZIP as GUNZIP_GTF              } from '../../modules/nf-core/modules/gunzip/main'                    addParams( options: params.genome_options       )
-include { UNTAR as UNTAR_HISAT2_INDEX } from '../../modules/nf-core/modules/untar/main'                     addParams( options: params.hisat2_index_options )
-include { HISAT2_EXTRACTSPLICESITES   } from '../../modules/nf-core/modules/hisat2/extractsplicesites/main' addParams( options: params.hisat2_index_options )
-include { HISAT2_BUILD                } from '../../modules/nf-core/modules/hisat2/build/main'              addParams( options: params.hisat2_index_options )
+    GUNZIP as GUNZIP_GTF              } from '../../modules/nf-core/gunzip/main'                    addParams( options: params.genome_options       )
+include { UNTAR as UNTAR_HISAT2_INDEX } from '../../modules/nf-core/untar/main'                     addParams( options: params.hisat2_index_options )
+include { HISAT2_EXTRACTSPLICESITES   } from '../../modules/nf-core/hisat2/extractsplicesites/main' addParams( options: params.hisat2_index_options )
+include { HISAT2_BUILD                } from '../../modules/nf-core/hisat2/build/main'              addParams( options: params.hisat2_index_options )
 
 workflow PREPARE_GENOME {
     take:
