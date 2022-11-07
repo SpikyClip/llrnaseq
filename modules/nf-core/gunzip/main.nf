@@ -1,35 +1,44 @@
-// Import generic module functions
-include { initOptions; saveFiles; getSoftwareName } from './functions'
-
-params.options = [:]
-options        = initOptions(params.options)
-
 process GUNZIP {
     tag "$archive"
-    label 'process_low'
-    publishDir "${params.outdir}",
-        mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), meta:[:], publish_by_meta:[]) }
+    label 'process_single'
 
     conda (params.enable_conda ? "conda-forge::sed=4.7" : null)
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img"
-    } else {
-        container "biocontainers/biocontainers:v1.2.0_cv1"
-    }
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/ubuntu:20.04' :
+        'ubuntu:20.04' }"
 
     input:
-    path archive
+    tuple val(meta), path(archive)
 
     output:
-    path "$gunzip",       emit: gunzip
-    path "*.version.txt", emit: version
+    tuple val(meta), path("$gunzip"), emit: gunzip
+    path "versions.yml"             , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
-    def software = getSoftwareName(task.process)
-    gunzip       = archive.toString() - '.gz'
+    def args = task.ext.args ?: ''
+    gunzip = archive.toString() - '.gz'
     """
-    gunzip -f $options.args $archive
-    echo \$(gunzip --version 2>&1) | sed 's/^.*(gzip) //; s/ Copyright.*\$//' > ${software}.version.txt
+    gunzip \\
+        -f \\
+        $args \\
+        $archive
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        gunzip: \$(echo \$(gunzip --version 2>&1) | sed 's/^.*(gzip) //; s/ Copyright.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    gunzip = archive.toString() - '.gz'
+    """
+    touch $gunzip
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        gunzip: \$(echo \$(gunzip --version 2>&1) | sed 's/^.*(gzip) //; s/ Copyright.*\$//')
+    END_VERSIONS
     """
 }
