@@ -15,19 +15,14 @@ Institute of Molecular Science (LIMS) High Performance Computing Cluster
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow
 tool to run tasks across multiple compute infrastructures in a very portable
-manner. It typically uses Docker/Singularity containers making installation
+manner. It  uses Docker/Singularity containers making installation
 trivial and results highly reproducible. The [Nextflow
 DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this
 pipeline uses one container per process which makes it much easier to maintain
 and update software dependencies. 
 
-However, as Docker is unavailable on the LIMS-HPCC the local version of
-Singularity is outdated, this pipeline has a `-profile lims` profile to switch
-the process environment manager to [environment
-modules](http://modules.sourceforge.net/). Nevertheless, it still has the
-options to use the other native `docker` and `singularity` profiles which
-should work if run on a computer that has access to those programs, or if the
-LIMS-HPCC is updated to support them in the future.
+As the new cluster now has `singularity` support, the best profile to run
+the pipeline is now `-profile lims,singularity`.
 
 ## Pipeline summary
 
@@ -61,9 +56,7 @@ LIMS-HPCC is updated to support them in the future.
    command:
     1. If running on the LIMS-HPCC:
        ```
-       module load java/1.8.0_66
-
-       nextflow run SpikyClip/llrnaseq -profile test,lims
+       nextflow run SpikyClip/llrnaseq -profile test,lims,singularity
        ```
     2. If running on a `Docker`/`Singularity` capable machine:
        ```
@@ -102,7 +95,7 @@ LIMS-HPCC is updated to support them in the future.
 
       ```
       nextflow run llrnaseq \
-          -profile lims \
+          -profile lims,singularity \
           --input <samplesheet>.csv \
           --genome GRCh37
       ```
@@ -110,7 +103,7 @@ LIMS-HPCC is updated to support them in the future.
 
       ```
       nextflow run llrnaseq \
-          -profile lims \
+          -profile lims,singularity \
           --input <samplesheet>.csv \
           --fasta <genome>.fa> \
           --gtf <annotation>.gtf
