@@ -88,7 +88,7 @@ def cat_fastq_options     = modules['cat_fastq']
 if (!params.save_merged_fastq) { cat_fastq_options['publish_files'] = false }
 
 def multiqc_options       = modules['multiqc']
-multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
+// !multiqc_options.args     += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
 
 def featurecounts_options = modules['subreads_featurecounts']
 
@@ -104,7 +104,7 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 
 // Trimgalore
 def trimgalore_options    = modules['trimgalore']
-trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
+// !trimgalore_options.args  += params.trim_nextseq > 0 ? Utils.joinModuleArgs(["--nextseq ${params.trim_nextseq}"]) : ''
 if (params.save_trimmed)  { trimgalore_options.publish_files.put('fq.gz','') }
 
 // Hisat2
@@ -115,7 +115,7 @@ if (params.save_unaligned)       { hisat2_align_options.publish_files.put('fastq
 // Samtools
 def samtools_sort_genome_options    = modules['samtools_sort_genome']
 def samtools_index_genome_options   = modules['samtools_index_genome']
-samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
+// !samtools_index_genome_options.args += params.bam_csi_index ? Utils.joinModuleArgs(['-c']) : ''
 
 // Block for conditional publishing of alignment files
 if (['hisat2'].contains( params.aligner )) {
@@ -126,7 +126,7 @@ if (['hisat2'].contains( params.aligner )) {
 
 // Stringtie
 def stringtie_options   = modules['stringtie']
-stringtie_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
+// !stringtie_options.args += params.stringtie_ignore_gtf ? '' : Utils.joinModuleArgs(['-e'])
 
 
 include { FASTQC_TRIMGALORE } from '../subworkflows/nf-core/fastqc_trimgalore' addParams( fastqc_options: modules['fastqc'], trimgalore_options: trimgalore_options )
